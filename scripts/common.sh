@@ -215,20 +215,3 @@ port_forwarding() {
     echo ".>   Local API: 127.0.0.1:${LOCAL_PORT}"
     echo ".>   Published: ${TAILSCALE_IP}:${PUBLISHED_PORT}"
 }
-
-start_socat() {
-	# run socat
-	if [ -z "${SOCAT_PORT}" ]; then
-		echo ".> SOCAT_PORT not set, port: ${SOCAT_PORT}"
-		exit 1
-	fi
-	if [ -n "$(pgrep -f "fork TCP:127.0.0.1:${API_PORT}")" ]; then
-		# if this script is already running don't start it
-		echo ".> socat already active. Not starting a new one"
-		return 0
-	else
-		# start socat
-		"${SCRIPT_PATH}/run_socat.sh" &
-	fi
-
-}
