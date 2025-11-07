@@ -5,3 +5,6 @@ ssh/
 /*_password.txt
 /pass/*
 /init-scripts/*
+
+.private
+.private-journal
