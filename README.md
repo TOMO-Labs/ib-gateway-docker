@@ -170,6 +170,7 @@ The container can be configured with the following environment variables:
 | `START_SCRIPTS` | Directory with bash scripts to run **before** X environment is up. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `X_SCRIPTS` | Directory with bash scripts to run **after** X environment is running. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `IBC_SCRIPTS` | Directory with bash scripts to run **after** IBC is running. See [start-up scripts](#start-up-scripts) | **not defined** |
+| `HAPROXY_RESTART` | Seconds to wait before restarting HAProxy if it exits. | 5 |
 
 ## Ports
 
@@ -338,25 +339,51 @@ services:
   environment:
     ...
     TWS_PASSWORD_FILE: /run/secrets/tws_password
-    SSH_PASSPHRASE_FILE: /run/secrets/ssh_passphrase
     VNC_SERVER_PASSWORD_FILE: /run/secrets/vnc_password
     ...
   secrets:
     - tws_password
-    - ssh_passphrase
     - vnc_password
   ...
 secrets:
   tws_password:
     file: tws_password.txt
-  ssh_passphrase:
-    file: ssh_password.txt
   vnc_password:
     file: vnc_password.txt
 
 ```
 
 In the "discussion" section you will find a full example for [ib-gateway](https://github.com/gnzsnz/ib-gateway-docker/discussions/103).
+
+## Migration from socat to HAProxy
+
+If you're upgrading from a previous version that used socat for port forwarding, you'll need to update your port mappings:
+
+**Old configuration (socat):**
+```yaml
+ports:
+  - "127.0.0.1:4001:4003"  # Live trading (via socat relay)
+  - "127.0.0.1:4002:4004"  # Paper trading (via socat relay)
+```
+
+**New configuration (HAProxy):**
+```yaml
+ports:
+  - "127.0.0.1:4001:4001"  # Live trading (direct via HAProxy)
+  - "127.0.0.1:4002:4002"  # Paper trading (direct via HAProxy)
+  - "127.0.0.1:8404:8404"  # HAProxy stats page (optional)
+```
+
+**Key changes:**
+- Port mappings are now direct (4001→4001, 4002→4002) instead of offset (4001→4003, 4002→4004)
+- New stats page available at `http://localhost:8404/stats` for monitoring connection health
+- HAProxy provides built-in health checks and automatic failover
+- SSH tunneling feature has been removed. For remote access, use external SSH port forwarding, VPN, or Tailscale
+
+**For remote access via SSH:**
+```bash
+ssh -L 4001:localhost:4001 user@your-host
+```
 
 ## Troubleshooting HAProxy
 

@@ -123,7 +123,7 @@ port_forwarding() {
 	echo ".> Starting Port Forwarding."
 	# validate API port
 	if [ -z "${API_PORT}" ]; then
-		echo ".> API_PORT not set, port: ${API_PORT}"
+		echo ".> ERROR: API_PORT not set"
 		exit 1
 	fi
 

@@ -169,6 +169,7 @@ The container can be configured with the following environment variables:
 | `START_SCRIPTS` | Directory with bash scripts to run **before** X environment is up. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `X_SCRIPTS` | Directory with bash scripts to run **after** X environment is running. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `IBC_SCRIPTS` | Directory with bash scripts to run **after** IBC is running. See [start-up scripts](#start-up-scripts) | **not defined** |
+| `HAPROXY_RESTART` | Seconds to wait before restarting HAProxy if it exits. | 5 |
 
 ## Ports
 
@@ -337,19 +338,15 @@ services:
   environment:
     ...
     TWS_PASSWORD_FILE: /run/secrets/tws_password
-    SSH_PASSPHRASE_FILE: /run/secrets/ssh_passphrase
     VNC_SERVER_PASSWORD_FILE: /run/secrets/vnc_password
     ...
   secrets:
     - tws_password
-    - ssh_passphrase
     - vnc_password
   ...
 secrets:
   tws_password:
     file: tws_password.txt
-  ssh_passphrase:
-    file: ssh_password.txt
   vnc_password:
     file: vnc_password.txt
 

@@ -12,7 +12,6 @@ This repository provides a Docker image to run Interactive Brokers Gateway (IB G
 - Xvfb: Virtual framebuffer for running GUI applications headlessly
 - x11vnc: Optional VNC server for remote GUI access
 - HAProxy: TCP proxy for exposing API ports with health checks and monitoring
-- Optional SSH tunneling for secure remote connections
 
 ## Repository Structure
 
@@ -32,7 +31,7 @@ config/              # Config templates
 ├── ibgateway/      # IB Gateway config templates (jts.ini.tmpl)
 └── ibc/            # IBC config templates (config.ini.tmpl)
 
-scripts/             # Runtime scripts (run.sh, common.sh, run_ssh.sh, run_haproxy.sh)
+scripts/             # Runtime scripts (run.sh, common.sh, run_haproxy.sh)
 
 Dockerfile           # Single Dockerfile for ib-gateway
 docker-compose.yml   # Docker compose for ib-gateway
@@ -130,9 +129,6 @@ IB Gateway (localhost) → HAProxy (TCP proxy) → Docker port mapping → Host
 - Generated at runtime: `${HOME}/haproxy/haproxy.cfg`
 - Startup script: `scripts/run_haproxy.sh`
 
-**SSH Tunnel Alternative:**
-Set `SSH_TUNNEL=yes` to use SSH tunneling instead of HAProxy for enhanced security, or `SSH_TUNNEL=both` to run both.
-
 ## Start-up Scripts
 
 The container supports three stages of custom start-up scripts:
@@ -154,8 +150,7 @@ For ib-gateway, `$HOME=/home/ibgateway`.
 **Critical security notes:**
 - IB API uses unencrypted, unauthenticated TCP sockets
 - Default docker-compose exposes ports only to `127.0.0.1` on host
-- Never expose API ports to untrusted networks without additional security (SSH tunnel, VPN, etc.)
-- Use SSH tunneling (`SSH_TUNNEL=yes`) for remote access
+- Never expose API ports to untrusted networks without additional security (VPN, SSH port forwarding, etc.)
 - Credential files (`_FILE` variables) support Docker secrets for production deployments
 
 ## CI/CD
@@ -180,13 +175,10 @@ Multi-arch support uses QEMU for arm64 builds on amd64 runners.
 docker compose build
 ```
 
-**Restart HAProxy/SSH tunnel in running container:**
+**Restart HAProxy in running container:**
 ```bash
 # Restart HAProxy
 docker exec -it algo-trader-ib-gateway-1 pkill -x haproxy
-
-# Restart SSH tunnel
-docker exec -it algo-trader-ib-gateway-1 pkill -x ssh
 ```
 
 **Access HAProxy stats:**
