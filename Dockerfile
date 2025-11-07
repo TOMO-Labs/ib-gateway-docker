@@ -103,6 +103,9 @@ RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Tailscale
+RUN curl -fsSL https://tailscale.com/install.sh | sh
+
 RUN if id ubuntu; then \
     userdel -rf ubuntu \
   ;fi && \
