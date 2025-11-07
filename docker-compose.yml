@@ -2,11 +2,7 @@ name: algo-trader
 services:
   ib-gateway:
     restart: always
-    build:
-      context: .
-      tags:
-        - "ghcr.io/gnzsnz/ib-gateway:latest"
-    image: ghcr.io/gnzsnz/ib-gateway:latest
+    image: ghcr.io/tomo-labs/ib-gateway:latest
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
@@ -45,12 +41,14 @@ services:
       START_SCRIPTS: ${START_SCRIPTS:-}
       X_SCRIPTS: ${X_SCRIPTS:-}
       IBC_SCRIPTS: ${IBC_SCRIPTS:-}
-    #    volumes:
-    #      - ${PWD}/jts.ini:/home/ibgateway/Jts/jts.ini
-    #      - ${PWD}/config.ini:/home/ibgateway/ibc/config.ini
-    #      - ${PWD}/tws_settings/:${TWS_SETTINGS_PATH:-/home/ibgateway/Jts}
-    #      - ${PWD}/ssh/:/home/ibgateway/.ssh
-    #      - ${PWD}/scripts:/home/ibgateway/init-scripts
+    # Uncomment volumes as needed:
+    # volumes:
+    #   # Persistent IB Gateway settings
+    #   - ${PWD}/tws_settings/:${TWS_SETTINGS_PATH:-/home/ibgateway/Jts}
+    #   # SSH keys for tunnel authentication
+    #   - ${PWD}/ssh/:/home/ibgateway/.ssh
+    #   # Custom startup scripts
+    #   - ${PWD}/scripts:/home/ibgateway/init-scripts
     ports:
       - "127.0.0.1:4001:4003"
       - "127.0.0.1:4002:4004"

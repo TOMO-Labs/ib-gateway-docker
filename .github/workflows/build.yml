@@ -31,8 +31,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/gnzsnz/ib-gateway
-            gnzsnz/ib-gateway
+            ghcr.io/tomo-labs/ib-gateway
+            tomo-labs/ib-gateway
           flavor: |
             latest=true
           tags: |
