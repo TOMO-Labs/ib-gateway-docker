@@ -199,26 +199,21 @@ start_caddy() {
 }
 
 port_forwarding() {
-	echo ".> Starting Port Forwarding."
-	# validate API port
-	if [ -z "${API_PORT}" ]; then
-		echo ".> API_PORT not set, port: ${API_PORT}"
-		exit 1
-	fi
+    echo ".> Setting up port forwarding with Caddy..."
 
-	if [ "$SSH_TUNNEL" = "yes" ] || [ "$SSH_TUNNEL" = "both" ]; then
-		echo ".> Starting SSH Tunnel"
-		# start socat of tunnel = both
-		if [ "$SSH_TUNNEL" = "both" ]; then
-			echo ".> Starting socat"
-			start_socat
-		fi
-		# ssh
-		start_ssh
-	else
-		echo ".> Starting socat"
-		start_socat
-	fi
+    # Start Tailscale first
+    start_tailscale
+
+    # Export port variables for Caddy config
+    export PUBLISHED_PORT="${SOCAT_PORT}"
+    export LOCAL_PORT="${API_PORT}"
+
+    # Start Caddy
+    start_caddy
+
+    echo ".> Port forwarding setup complete"
+    echo ".>   Local API: 127.0.0.1:${LOCAL_PORT}"
+    echo ".>   Published: ${TAILSCALE_IP}:${PUBLISHED_PORT}"
 }
 
 setup_ssh() {
