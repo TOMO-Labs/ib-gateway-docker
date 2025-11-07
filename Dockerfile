@@ -91,8 +91,19 @@ RUN apt-get update -y && \
   apt-get install --no-install-recommends --yes \
   gettext-base xvfb x11vnc sudo telnet curl gnupg && \
   apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  if id ubuntu; then \
+  rm -rf /var/lib/apt/lists/*
+
+# Install Caddy
+RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
+    gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && \
+    curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | \
+    tee /etc/apt/sources.list.d/caddy-stable.list && \
+    apt-get update && \
+    apt-get install --no-install-recommends --yes caddy && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN if id ubuntu; then \
     userdel -rf ubuntu \
   ;fi && \
   groupadd --gid ${USER_GID} ibgateway && \
