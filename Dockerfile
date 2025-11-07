@@ -106,6 +106,10 @@ RUN curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | \
 # Install Tailscale
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 
+# Create Caddy log directory
+RUN mkdir -p /var/log/caddy && \
+    chown ${USER_ID}:${USER_GID} /var/log/caddy
+
 RUN if id ubuntu; then \
     userdel -rf ubuntu \
   ;fi && \
