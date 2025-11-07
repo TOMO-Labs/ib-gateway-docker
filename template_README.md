@@ -31,12 +31,11 @@ It includes:
 
 ## Supported Tags
 
-Images are provided for [IB gateway][1]. With the following tags:
+Images are provided for [IB gateway][1] with the following tags:
 
-| Image| Channel  | IB Gateway Version  | IBC Version      | Docker Tags                                    |
-| --- | -------- | ------------------- | ---------------- | ---------------------------------------------- |
-| [ib-gateway][1] | `latest` | `${LATEST_VERSION}` | `${IBC_VERSION}` | `latest` `${LATEST_MINOR}` `${LATEST_VERSION}` |
-| [ib-gateway][1] |`stable` | `${STABLE_VERSION}` | `${IBC_VERSION}` | `stable` `${STABLE_MINOR}` `${STABLE_VERSION}` |
+| Image| IB Gateway Version  | IBC Version      | Docker Tags                                    |
+| --- | ------------------- | ---------------- | ---------------------------------------------- |
+| [ib-gateway][1] | `${LATEST_VERSION}` | `${IBC_VERSION}` | `latest` `${LATEST_MINOR}` `${LATEST_VERSION}` |
 
 All tags are available in the container repository for [ib-gateway][1].
 

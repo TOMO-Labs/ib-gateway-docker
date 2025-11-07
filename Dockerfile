@@ -9,12 +9,11 @@
 FROM ubuntu:24.04 AS setup
 
 ENV IB_GATEWAY_VERSION=10.41.1c
-ENV IB_GATEWAY_CHANNEL=latest
 ENV IBC_VERSION=3.23.0
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_FILE="ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh"
 ARG IB_GATEWAY_REPO="https://github.com/gnzsnz/ib-gateway-docker"
-ARG IB_GATEWAY_URL="${IB_GATEWAY_REPO}/releases/download/ibgateway-${IB_GATEWAY_CHANNEL}%40${IB_GATEWAY_VERSION}/${IB_GATEWAY_FILE}"
+ARG IB_GATEWAY_URL="${IB_GATEWAY_REPO}/releases/download/ibgateway%40${IB_GATEWAY_VERSION}/${IB_GATEWAY_FILE}"
 ARG IBC_FILE="IBCLinux-${IBC_VERSION}.zip"
 ARG IBC_REPO="https://github.com/IbcAlpha/IBC"
 ARG IBC_URL="${IBC_REPO}/releases/download/${IBC_VERSION}/${IBC_FILE}"

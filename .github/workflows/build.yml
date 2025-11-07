@@ -34,11 +34,10 @@ jobs:
             ghcr.io/gnzsnz/ib-gateway
             gnzsnz/ib-gateway
           flavor: |
-            latest=false
+            latest=true
           tags: |
             type=match,pattern=v(\d+.\d+),group=1
             type=match,pattern=v(\d+.\d+.\w+),group=1
-            type=match,pattern=v(\d+.\d+.\w+)+\-(stable|latest),group=2
 
       - name: Build ibgateway Docker image
         uses: docker/build-push-action@v5

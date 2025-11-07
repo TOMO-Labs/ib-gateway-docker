@@ -12,9 +12,4 @@ on:
 jobs:
   build:
       name: Build image
-      strategy:
-        matrix:
-          channel: ['stable', 'latest']
       uses: gnzsnz/ib-gateway-docker/.github/workflows/build.yml@master
-      with:
-          channel: ${{ matrix.channel }}

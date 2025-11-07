@@ -28,7 +28,7 @@ jobs:
       - name: Get Current Version
         id: version
         run: |
-          CURRENT_IBC="$(grep 'ENV IBC_VERSION' Dockerfile.template|cut -d '=' -f 2)"
+          CURRENT_IBC="$(grep 'ENV IBC_VERSION' Dockerfile|cut -d '=' -f 2)"
           echo "CURRENT_IBC=$CURRENT_IBC" >> $GITHUB_OUTPUT
 
       - name: Get IBC latest version
@@ -86,14 +86,11 @@ jobs:
           git pull
           git checkout -b "$branch" origin/master
 
-          # update Dockerfile.template, but don't run update.sh
-          # next ib gateway release will run update.sh
-          echo ".> updating Dockerfile.template"
-          sed -i "s/IBC_VERSION=${ver}/IBC_VERSION=${latest}/g" Dockerfile.template
-          echo ".> updating Dockerfile.tws.template"
-          sed -i "s/IBC_VERSION=${ver}/IBC_VERSION=${latest}/g" Dockerfile.tws.template
+          # update Dockerfile
+          echo ".> updating Dockerfile"
+          sed -i "s/IBC_VERSION=${ver}/IBC_VERSION=${latest}/g" Dockerfile
 
-          git add Dockerfile.template Dockerfile.tws.template
+          git add Dockerfile
           git commit -m "Update IBC from ${ver} to ${latest}"
           git push --set-upstream origin "$branch"
 
@@ -104,9 +101,4 @@ jobs:
     name: Call build workflow
     needs: detect-release
     if: needs.detect-release.outputs.update == 'true'
-    strategy:
-      matrix:
-        channel: ['stable', 'latest']
     uses: gnzsnz/ib-gateway-docker/.github/workflows/build.yml@master
-    with:
-        channel: ${{ matrix.channel }}
