@@ -216,54 +216,6 @@ port_forwarding() {
     echo ".>   Published: ${TAILSCALE_IP}:${PUBLISHED_PORT}"
 }
 
-setup_ssh() {
-	# prepare SSH Tunnel
-	if [ "$SSH_TUNNEL" = "yes" ] || [ "$SSH_TUNNEL" = "both" ]; then
-		echo ".> Setting SSH tunnel"
-
-		_SSH_OPTIONS="-o ServerAliveInterval=${SSH_ALIVE_INTERVAL:-20}"
-		_SSH_OPTIONS+=" -o ServerAliveCountMax=${SSH_ALIVE_COUNT:-3}"
-
-		if [ -n "$SSH_OPTIONS" ]; then
-			_SSH_OPTIONS+=" $SSH_OPTIONS"
-		fi
-		SSH_ALL_OPTIONS="$_SSH_OPTIONS"
-		export SSH_ALL_OPTIONS
-		echo ".> SSH options: $SSH_ALL_OPTIONS"
-
-		file_env 'SSH_PASSPHRASE'
-		if [ -n "$SSH_PASSPHRASE" ]; then
-			if ! pgrep ssh-agent >/dev/null; then
-				# start agent if it's not already running
-				# https://wiki.archlinux.org/title/SSH_keys#SSH_agents
-				echo ".> Starting ssh-agent."
-				ssh-agent >"${HOME}/.ssh-agent.env"
-				source "${HOME}/.ssh-agent.env"
-				echo ".> ssh-agent sock: ${SSH_AUTH_SOCK}"
-			else
-				echo ".> ssh-agent already running"
-				if [ -z "${SSH_AUTH_SOCK}" ]; then
-					echo ".> Loading agent environment"
-					source "${HOME}/.ssh-agent.env"
-				fi
-				echo ".> ssh-agent sock: ${SSH_AUTH_SOCK}"
-			fi
-
-			if ls "${HOME}"/.ssh/id_* >/dev/null; then
-				echo ".> Adding keys to ssh-agent."
-				export SSH_ASKPASS_REQUIRE=never
-				SSHPASS="${SSH_PASSPHRASE}" sshpass -e -P "passphrase" ssh-add
-				unset_env 'SSH_PASSPHRASE'
-				echo ".> ssh-agent identities: $(ssh-add -l)"
-			else
-				echo ".> SSH keys not found, ssh-agent not started"
-			fi
-		fi
-	else
-		echo ".> SSH tunnel disabled"
-	fi
-}
-
 start_ssh() {
 	if [ -n "$(pgrep -f "127.0.0.1:${API_PORT}:localhost:")" ]; then
 		# if this script is already running don't start it
