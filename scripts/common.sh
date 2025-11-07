@@ -122,6 +122,51 @@ set_java_heap() {
 	fi
 }
 
+start_tailscale() {
+    echo ".> Starting Tailscale daemon..."
+
+    # Create state directory if it doesn't exist
+    mkdir -p /var/lib/tailscale
+
+    # Start tailscaled in background with userspace networking
+    tailscaled --tun=userspace-networking --state=/var/lib/tailscale/state.conf &
+    sleep 2
+
+    # Bring up Tailscale network
+    echo ".> Connecting to Tailscale network..."
+    local hostname="${TAILSCALE_HOSTNAME:-$(hostname)}"
+
+    if [ -z "$TAILSCALE_AUTHKEY" ]; then
+        echo ".> ERROR: TAILSCALE_AUTHKEY environment variable is required"
+        exit 1
+    fi
+
+    tailscale up --authkey="${TAILSCALE_AUTHKEY}" \
+                 --hostname="${hostname}" \
+                 ${TAILSCALE_EXTRA_ARGS}
+
+    # Wait for Tailscale IP
+    echo ".> Waiting for Tailscale IP..."
+    local max_attempts=30
+    local attempt=0
+
+    while [ -z "$TAILSCALE_IP" ] && [ $attempt -lt $max_attempts ]; do
+        TAILSCALE_IP=$(tailscale ip -4 2>/dev/null)
+        if [ -z "$TAILSCALE_IP" ]; then
+            sleep 1
+            attempt=$((attempt + 1))
+        fi
+    done
+
+    if [ -z "$TAILSCALE_IP" ]; then
+        echo ".> ERROR: Failed to obtain Tailscale IP after ${max_attempts} seconds"
+        exit 1
+    fi
+
+    export TAILSCALE_IP
+    echo ".> Tailscale connected with IP: ${TAILSCALE_IP}"
+}
+
 port_forwarding() {
 	echo ".> Starting Port Forwarding."
 	# validate API port
