@@ -15,7 +15,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:release-assets.githubusercontent.com)",
       "Bash(git ls-tree:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(docker run:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
