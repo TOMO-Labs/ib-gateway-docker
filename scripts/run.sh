@@ -12,36 +12,39 @@ echo "*************************************************************************"
 source "${SCRIPT_PATH}/common.sh"
 
 stop_ibc() {
-	echo ".> 😘 Received SIGINT or SIGTERM. Shutting down IB Gateway."
+    echo ".> 😘 Received SIGINT or SIGTERM. Shutting down IB Gateway."
 
-	#
-	if pgrep x11vnc >/dev/null; then
-		echo ".> Stopping x11vnc."
-		pkill x11vnc
-	fi
-	#
-	echo ".> Stopping Xvfb."
-	pkill Xvfb
-	#
-	if [ -n "$SSH_TUNNEL" ]; then
-		echo ".> Stopping ssh."
-		pkill run_ssh.sh
-		pkill ssh
-		echo ".> Stopping socat."
-		pkill run_socat.sh
-		pkill socat
-	else
-		echo ".> Stopping socat."
-		pkill run_socat.sh
-		pkill socat
-	fi
-	# Set TERM
-	echo ".> Stopping IBC."
-	kill -SIGTERM "${pid[@]}"
-	# Wait for exit
-	wait "${pid[@]}"
-	# All done.
-	echo ".> Done... $?"
+    # Stop Caddy
+    if pgrep caddy >/dev/null; then
+        echo ".> Stopping Caddy."
+        sudo pkill caddy
+    fi
+
+    # Stop Tailscale
+    if pgrep tailscaled >/dev/null; then
+        echo ".> Stopping Tailscale."
+        sudo pkill tailscaled
+    fi
+
+    # Stop VNC
+    if pgrep x11vnc >/dev/null; then
+        echo ".> Stopping x11vnc."
+        pkill x11vnc
+    fi
+
+    # Stop Xvfb
+    echo ".> Stopping Xvfb."
+    pkill Xvfb
+
+    # Stop IBC
+    echo ".> Stopping IBC."
+    kill -SIGTERM "${pid[@]}"
+
+    # Wait for exit
+    wait "${pid[@]}"
+
+    # All done
+    echo ".> Done... $?"
 }
 
 start_xvfb() {
