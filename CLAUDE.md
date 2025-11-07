@@ -11,7 +11,7 @@ This repository provides a Docker image to run Interactive Brokers Gateway (IB G
 - IBC (Interactive Brokers Controller): Automates user interactions with IB Gateway
 - Xvfb: Virtual framebuffer for running GUI applications headlessly
 - x11vnc: Optional VNC server for remote GUI access
-- socat: TCP relay for exposing API ports from localhost to container network
+- HAProxy: TCP proxy for exposing API ports with health checks and monitoring
 - Optional SSH tunneling for secure remote connections
 
 ## Repository Structure
@@ -28,10 +28,11 @@ The repository uses a **simplified single-Dockerfile build system**:
 **Key directories:**
 ```
 config/              # Config templates
+├── haproxy/        # HAProxy config templates (haproxy.cfg.tmpl)
 ├── ibgateway/      # IB Gateway config templates (jts.ini.tmpl)
 └── ibc/            # IBC config templates (config.ini.tmpl)
 
-scripts/             # Runtime scripts (run.sh, common.sh, run_ssh.sh, run_socat.sh)
+scripts/             # Runtime scripts (run.sh, common.sh, run_ssh.sh, run_haproxy.sh)
 
 Dockerfile           # Single Dockerfile for ib-gateway
 docker-compose.yml   # Docker compose for ib-gateway
@@ -42,7 +43,8 @@ docker-compose.yml   # Docker compose for ib-gateway
 The **ib-gateway** container image (from `Dockerfile`): Headless IB Gateway with optional VNC access
 - Base user: `ibgateway` (UID 1000)
 - Home: `/home/ibgateway`
-- API ports: 4001 (live), 4002 (paper) - exposed via socat as 4003/4004
+- API ports: 4001 (live), 4002 (paper) - proxied through HAProxy with health checks
+- HAProxy stats: 8404 (monitoring web UI at /stats)
 - VNC port: 5900 (optional)
 
 ## Development Workflow
@@ -105,15 +107,31 @@ When `TRADING_MODE=both`:
 
 ## Port Forwarding Architecture
 
-**Why socat is needed:**
-IB Gateway binds API ports to `127.0.0.1` (localhost only) inside the container for security. To make these ports accessible to other containers or the host, `socat` relays connections:
+**Why HAProxy is needed:**
+IB Gateway binds API ports to `127.0.0.1` (localhost only) inside the container for security. To make these ports accessible to other containers or the host, HAProxy proxies connections with additional features:
 
-- IB Gateway: `127.0.0.1:4001` → `0.0.0.0:4003`, `127.0.0.1:4002` → `0.0.0.0:4004`
+**Architecture:**
+```
+IB Gateway (localhost) → HAProxy (TCP proxy) → Docker port mapping → Host
+127.0.0.1:4001        → 0.0.0.0:4001      → 127.0.0.1:4001
+127.0.0.1:4002        → 0.0.0.0:4002      → 127.0.0.1:4002
+```
 
-The `docker-compose.yml` then maps these back to standard ports on the host (4001/4002).
+**HAProxy Features:**
+- **Health Checks:** Probes IB Gateway every 2 seconds, marks backends down after 2 failures
+- **Connection Limits:** Max 200 concurrent connections per port (live/paper)
+- **Long Timeouts:** 6-hour client/server timeouts for persistent IB connections
+- **Stats Page:** Web UI at `http://localhost:8404/stats` showing connection metrics and health status
+- **Graceful Reload:** Can reload configuration without dropping connections
+- **Better Logging:** Structured TCP logs with timestamps, durations, byte counts to Docker logs
+
+**HAProxy Configuration:**
+- Template: `config/haproxy/haproxy.cfg.tmpl`
+- Generated at runtime: `${HOME}/haproxy/haproxy.cfg`
+- Startup script: `scripts/run_haproxy.sh`
 
 **SSH Tunnel Alternative:**
-Set `SSH_TUNNEL=yes` to use SSH tunneling instead of socat for enhanced security.
+Set `SSH_TUNNEL=yes` to use SSH tunneling instead of HAProxy for enhanced security, or `SSH_TUNNEL=both` to run both.
 
 ## Start-up Scripts
 
@@ -162,14 +180,21 @@ Multi-arch support uses QEMU for arm64 builds on amd64 runners.
 docker compose build
 ```
 
-**Restart socat/ssh tunnel in running container:**
+**Restart HAProxy/SSH tunnel in running container:**
 ```bash
-# Restart socat
-docker exec -it algo-trader-ib-gateway-1 pkill -x socat
+# Restart HAProxy
+docker exec -it algo-trader-ib-gateway-1 pkill -x haproxy
 
 # Restart SSH tunnel
 docker exec -it algo-trader-ib-gateway-1 pkill -x ssh
 ```
+
+**Access HAProxy stats:**
+Open http://localhost:8404/stats in your browser to view:
+- Connection counts and rates
+- Backend health status
+- Request/response bytes
+- Connection durations
 
 **Preserve settings across container restarts:**
 Set `TWS_SETTINGS_PATH` and mount it as a volume in docker-compose.yml.

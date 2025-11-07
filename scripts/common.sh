@@ -87,26 +87,23 @@ run_scripts() {
 }
 
 set_ports() {
-	# set ports for API and SOCAT
+	# set ports for API
 
 	# ibgateway ports
 	if [ "$TRADING_MODE" = "paper" ]; then
 		# paper ibgateway ports
 		API_PORT=4002
-		SOCAT_PORT=4004
-		export API_PORT SOCAT_PORT
+		export API_PORT
 	elif [ "$TRADING_MODE" = "live" ]; then
 		# live ibgateway ports
 		API_PORT=4001
-		SOCAT_PORT=4003
-		export API_PORT SOCAT_PORT
+		export API_PORT
 	else
 		# invalid option
 		echo ".> Invalid TRADING_MODE: $TRADING_MODE"
 		exit 1
 	fi
 	echo ".> API_PORT set to: ${API_PORT}"
-	echo ".> SOCAT_PORT set to: ${SOCAT_PORT}"
 
 }
 
@@ -122,96 +119,35 @@ set_java_heap() {
 	fi
 }
 
-start_tailscale() {
-    echo ".> Starting Tailscale daemon..."
-
-    # Create state directory if it doesn't exist
-    mkdir -p /var/lib/tailscale
-
-    # Start tailscaled in background with userspace networking
-    tailscaled --tun=userspace-networking --state=/var/lib/tailscale/state.conf &
-    sleep 2
-
-    # Bring up Tailscale network
-    echo ".> Connecting to Tailscale network..."
-    local hostname="${TAILSCALE_HOSTNAME:-$(hostname)}"
-
-    if [ -z "$TAILSCALE_AUTHKEY" ]; then
-        echo ".> ERROR: TAILSCALE_AUTHKEY environment variable is required"
-        exit 1
-    fi
-
-    tailscale up --authkey="${TAILSCALE_AUTHKEY}" \
-                 --hostname="${hostname}" \
-                 ${TAILSCALE_EXTRA_ARGS}
-
-    # Wait for Tailscale IP
-    echo ".> Waiting for Tailscale IP..."
-    local max_attempts=30
-    local attempt=0
-
-    while [ -z "$TAILSCALE_IP" ] && [ $attempt -lt $max_attempts ]; do
-        TAILSCALE_IP=$(tailscale ip -4 2>/dev/null)
-        if [ -z "$TAILSCALE_IP" ]; then
-            sleep 1
-            attempt=$((attempt + 1))
-        fi
-    done
-
-    if [ -z "$TAILSCALE_IP" ]; then
-        echo ".> ERROR: Failed to obtain Tailscale IP after ${max_attempts} seconds"
-        exit 1
-    fi
-
-    export TAILSCALE_IP
-    echo ".> Tailscale connected with IP: ${TAILSCALE_IP}"
-}
-
-start_caddy() {
-    echo ".> Starting Caddy reverse proxy..."
-
-    if [ -z "$TAILSCALE_IP" ]; then
-        echo ".> ERROR: TAILSCALE_IP not set. Run start_tailscale first."
-        exit 1
-    fi
-
-    # Config template path
-    local config_template="${HOME}/caddy-config/Caddyfile.tmpl"
-    local config_output="/etc/caddy/Caddyfile"
-
-    # Set default log level if not specified
-    export CADDY_LOG_LEVEL="${CADDY_LOG_LEVEL:-INFO}"
-
-    # Generate Caddyfile from template
-    if [ -f "$config_template" ]; then
-        sudo envsubst < "$config_template" | sudo tee "$config_output" > /dev/null
-        echo ".> Generated Caddy config at ${config_output}"
-    else
-        echo ".> ERROR: Caddy config template not found at ${config_template}"
-        exit 1
-    fi
-
-    # Start Caddy in background
-    sudo caddy run --config "$config_output" &
-    sleep 1
-
-    echo ".> Caddy started successfully"
-}
-
 port_forwarding() {
-    echo ".> Setting up port forwarding with Caddy..."
+	echo ".> Starting Port Forwarding."
+	# validate API port
+	if [ -z "${API_PORT}" ]; then
+		echo ".> API_PORT not set, port: ${API_PORT}"
+		exit 1
+	fi
 
-    # Start Tailscale first
-    start_tailscale
+	# Start HAProxy for port forwarding
+	echo ".> Starting HAProxy"
+	start_haproxy
+}
 
-    # Export port variables for Caddy config
-    export PUBLISHED_PORT="${SOCAT_PORT}"
-    export LOCAL_PORT="${API_PORT}"
+start_haproxy() {
+	# Check if HAProxy is already running
+	if pgrep -x haproxy >/dev/null; then
+		echo ".> HAProxy already active. Not starting a new one"
+		return 0
+	fi
 
-    # Start Caddy
-    start_caddy
+	# Start HAProxy in background
+	echo ".> Starting HAProxy"
+	"${SCRIPT_PATH}/run_haproxy.sh" &
 
-    echo ".> Port forwarding setup complete"
-    echo ".>   Local API: 127.0.0.1:${LOCAL_PORT}"
-    echo ".>   Published: ${TAILSCALE_IP}:${PUBLISHED_PORT}"
+	# Wait briefly and verify it started
+	sleep 2
+	if pgrep -x haproxy >/dev/null; then
+		echo ".> HAProxy started successfully"
+	else
+		echo ".> WARNING: HAProxy may have failed to start"
+	fi
 }

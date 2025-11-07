@@ -12,39 +12,45 @@ echo "*************************************************************************"
 source "${SCRIPT_PATH}/common.sh"
 
 stop_ibc() {
-    echo ".> 😘 Received SIGINT or SIGTERM. Shutting down IB Gateway."
+	echo ".> 😘 Received SIGINT or SIGTERM. Shutting down IB Gateway."
 
-    # Stop Caddy
-    if pgrep caddy >/dev/null; then
-        echo ".> Stopping Caddy."
-        sudo pkill caddy
-    fi
+	#
+	if pgrep x11vnc >/dev/null; then
+		echo ".> Stopping x11vnc."
+		pkill x11vnc
+	fi
+	#
+	echo ".> Stopping Xvfb."
+	pkill Xvfb
+	#
+	if [ -n "$SSH_TUNNEL" ]; then
+		echo ".> Stopping ssh."
+		pkill run_ssh.sh
+		pkill ssh
+	fi
 
-    # Stop Tailscale
-    if pgrep tailscaled >/dev/null; then
-        echo ".> Stopping Tailscale."
-        sudo pkill tailscaled
-    fi
+	# Stop HAProxy gracefully
+	echo ".> Stopping HAProxy."
+	pkill run_haproxy.sh
+	if pgrep -x haproxy >/dev/null; then
+		# Use SIGTERM for graceful shutdown in master-worker mode
+		pkill -TERM haproxy
+		# Wait up to 5 seconds for graceful shutdown
+		for i in {1..5}; do
+			if ! pgrep -x haproxy >/dev/null; then
+				break
+			fi
+			sleep 1
+		done
+	fi
 
-    # Stop VNC
-    if pgrep x11vnc >/dev/null; then
-        echo ".> Stopping x11vnc."
-        pkill x11vnc
-    fi
-
-    # Stop Xvfb
-    echo ".> Stopping Xvfb."
-    pkill Xvfb
-
-    # Stop IBC
-    echo ".> Stopping IBC."
-    kill -SIGTERM "${pid[@]}"
-
-    # Wait for exit
-    wait "${pid[@]}"
-
-    # All done
-    echo ".> Done... $?"
+	# Set TERM
+	echo ".> Stopping IBC."
+	kill -SIGTERM "${pid[@]}"
+	# Wait for exit
+	wait "${pid[@]}"
+	# All done.
+	echo ".> Done... $?"
 }
 
 start_xvfb() {
