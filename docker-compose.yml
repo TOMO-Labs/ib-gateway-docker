@@ -8,6 +8,13 @@ services:
         - "ghcr.io/gnzsnz/ib-gateway:latest"
     image: ghcr.io/gnzsnz/ib-gateway:latest
     environment:
+      # Tailscale configuration
+      TAILSCALE_AUTHKEY: ${TAILSCALE_AUTHKEY}
+      TAILSCALE_HOSTNAME: ${TAILSCALE_HOSTNAME:-ib-gateway}
+      TAILSCALE_TAGS: ${TAILSCALE_TAGS:-}
+      TAILSCALE_EXTRA_ARGS: ${TAILSCALE_EXTRA_ARGS:-}
+      # Caddy configuration
+      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL:-INFO}
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
       TRADING_MODE: ${TRADING_MODE:-paper}
