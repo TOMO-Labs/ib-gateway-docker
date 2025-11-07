@@ -55,6 +55,7 @@ RUN apt-get update -y && \
 
 COPY ./config/ibgateway/jts.ini.tmpl /root/Jts/jts.ini.tmpl
 COPY ./config/ibc/config.ini.tmpl /root/ibc/config.ini.tmpl
+COPY ./config/caddy /root/caddy-config
 
 # Copy scripts
 COPY ./scripts /root/scripts
