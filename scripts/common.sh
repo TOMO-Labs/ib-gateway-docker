@@ -216,38 +216,6 @@ port_forwarding() {
     echo ".>   Published: ${TAILSCALE_IP}:${PUBLISHED_PORT}"
 }
 
-start_ssh() {
-	if [ -n "$(pgrep -f "127.0.0.1:${API_PORT}:localhost:")" ]; then
-		# if this script is already running don't start it
-		echo ".> SSH tunnel already active. Not starting a new one"
-		return 0
-	elif ! pgrep ssh-agent >/dev/null; then
-		# if ssh-agent is not running don't start tunnel
-		echo ".> ssh-agent is NOT running. Not starting a tunnel"
-		return 0
-	fi
-
-	if [ -z "$SSH_REMOTE_PORT" ]; then
-		# by default remote port is same than API_PORT
-		SSH_REMOTE_PORT="$API_PORT"
-	fi
-	echo ".> SSH_REMOTE_PORT set to :${SSH_REMOTE_PORT}"
-
-	# set vnc ssh tunnel
-	if [ -n "$SSH_VNC_PORT" ] && pgrep x11vnc >/dev/null; then
-		# set ssh tunnel for vnc
-		SSH_SCREEN="-R 127.0.0.1:5900:localhost:$SSH_VNC_PORT"
-		echo ".> SSH_VNC_TUNNEL set to :${SSH_SCREEN}"
-	else
-		# no ssh screen
-		SSH_SCREEN=
-	fi
-
-	export SSH_ALL_OPTIONS SSH_SCREEN SSH_REMOTE_PORT
-	# run ssh client
-	"${SCRIPT_PATH}/run_ssh.sh" &
-}
-
 start_socat() {
 	# run socat
 	if [ -z "${SOCAT_PORT}" ]; then
