@@ -112,9 +112,6 @@ fi
 # start Xvfb
 start_xvfb
 
-# setup SSH Tunnel
-setup_ssh
-
 # Java heap size
 set_java_heap
 
