@@ -167,6 +167,37 @@ start_tailscale() {
     echo ".> Tailscale connected with IP: ${TAILSCALE_IP}"
 }
 
+start_caddy() {
+    echo ".> Starting Caddy reverse proxy..."
+
+    if [ -z "$TAILSCALE_IP" ]; then
+        echo ".> ERROR: TAILSCALE_IP not set. Run start_tailscale first."
+        exit 1
+    fi
+
+    # Config template path
+    local config_template="${HOME}/caddy-config/Caddyfile.tmpl"
+    local config_output="/etc/caddy/Caddyfile"
+
+    # Set default log level if not specified
+    export CADDY_LOG_LEVEL="${CADDY_LOG_LEVEL:-INFO}"
+
+    # Generate Caddyfile from template
+    if [ -f "$config_template" ]; then
+        sudo envsubst < "$config_template" | sudo tee "$config_output" > /dev/null
+        echo ".> Generated Caddy config at ${config_output}"
+    else
+        echo ".> ERROR: Caddy config template not found at ${config_template}"
+        exit 1
+    fi
+
+    # Start Caddy in background
+    sudo caddy run --config "$config_output" &
+    sleep 1
+
+    echo ".> Caddy started successfully"
+}
+
 port_forwarding() {
 	echo ".> Starting Port Forwarding."
 	# validate API port
