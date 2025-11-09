@@ -22,19 +22,22 @@ stop_ibc() {
 	#
 	echo ".> Stopping Xvfb."
 	pkill Xvfb
-	#
-	if [ -n "$SSH_TUNNEL" ]; then
-		echo ".> Stopping ssh."
-		pkill run_ssh.sh
-		pkill ssh
-		echo ".> Stopping socat."
-		pkill run_socat.sh
-		pkill socat
-	else
-		echo ".> Stopping socat."
-		pkill run_socat.sh
-		pkill socat
+
+	# Stop HAProxy gracefully
+	echo ".> Stopping HAProxy."
+	pkill run_haproxy.sh
+	if pgrep -x haproxy >/dev/null; then
+		# Use SIGTERM for graceful shutdown in master-worker mode
+		pkill -TERM haproxy
+		# Wait up to 5 seconds for graceful shutdown
+		for i in {1..5}; do
+			if ! pgrep -x haproxy >/dev/null; then
+				break
+			fi
+			sleep 1
+		done
 	fi
+
 	# Set TERM
 	echo ".> Stopping IBC."
 	kill -SIGTERM "${pid[@]}"
@@ -87,11 +90,11 @@ start_IBC() {
 }
 
 start_process() {
-	# set API and socat ports
+	# set API ports
 	set_ports
 	# apply settings
 	apply_settings
-	# forward ports, socat/ssh
+	# forward ports via HAProxy
 	port_forwarding
 
 	start_IBC
@@ -108,9 +111,6 @@ fi
 
 # start Xvfb
 start_xvfb
-
-# setup SSH Tunnel
-setup_ssh
 
 # Java heap size
 set_java_heap
@@ -165,13 +165,7 @@ if [ "$DUAL_MODE" == "yes" ]; then
 		TWS_PASSWORD="${TWS_PASSWORD_PAPER}"
 		export TWS_PASSWORD
 	fi
-	# disable duplicate ssh for vnc/rdp
-	SSH_VNC_PORT=
-	export SSH_VNC_PORT
-	# in dual mode, ssh remote always == api port
-	SSH_REMOTE_PORT=
-	export SSH_REMOTE_PORT
-	#
+
 	IBC_INI="${_IBC_INI}_${TRADING_MODE}"
 	TWS_SETTINGS_PATH="${_TWS_SETTINGS_PATH}_${TRADING_MODE}"
 

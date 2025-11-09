@@ -13,7 +13,7 @@ ENV IBC_VERSION=3.23.0
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_FILE="ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh"
 ARG IB_GATEWAY_REPO="https://github.com/gnzsnz/ib-gateway-docker"
-ARG IB_GATEWAY_URL="${IB_GATEWAY_REPO}/releases/download/ibgateway%40${IB_GATEWAY_VERSION}/${IB_GATEWAY_FILE}"
+ARG IB_GATEWAY_URL="${IB_GATEWAY_REPO}/releases/download/ibgateway-latest%40${IB_GATEWAY_VERSION}/${IB_GATEWAY_FILE}"
 ARG IBC_FILE="IBCLinux-${IBC_VERSION}.zip"
 ARG IBC_REPO="https://github.com/IbcAlpha/IBC"
 ARG IBC_URL="${IBC_REPO}/releases/download/${IBC_VERSION}/${IBC_FILE}"
@@ -55,6 +55,7 @@ RUN apt-get update -y && \
 
 COPY ./config/ibgateway/jts.ini.tmpl /root/Jts/jts.ini.tmpl
 COPY ./config/ibc/config.ini.tmpl /root/ibc/config.ini.tmpl
+COPY ./config/haproxy/haproxy.cfg.tmpl /root/haproxy/haproxy.cfg.tmpl
 
 # Copy scripts
 COPY ./scripts /root/scripts
@@ -89,9 +90,10 @@ COPY --chown=${USER_ID}:${USER_GID} --from=setup /root/ ${HOME}
 RUN apt-get update -y && \
   apt-get upgrade -y && \
   apt-get install --no-install-recommends --yes \
-  gettext-base socat xvfb x11vnc sshpass openssh-client sudo telnet && \
+  gettext-base haproxy xvfb x11vnc sudo telnet && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
+  mkdir -p /home/ibgateway/haproxy && \
   if id ubuntu; then \
     userdel -rf ubuntu \
   ;fi && \

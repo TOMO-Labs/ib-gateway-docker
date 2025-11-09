@@ -87,26 +87,23 @@ run_scripts() {
 }
 
 set_ports() {
-	# set ports for API and SOCAT
+	# set ports for API
 
 	# ibgateway ports
 	if [ "$TRADING_MODE" = "paper" ]; then
 		# paper ibgateway ports
 		API_PORT=4002
-		SOCAT_PORT=4004
-		export API_PORT SOCAT_PORT
+		export API_PORT
 	elif [ "$TRADING_MODE" = "live" ]; then
 		# live ibgateway ports
 		API_PORT=4001
-		SOCAT_PORT=4003
-		export API_PORT SOCAT_PORT
+		export API_PORT
 	else
 		# invalid option
 		echo ".> Invalid TRADING_MODE: $TRADING_MODE"
 		exit 1
 	fi
 	echo ".> API_PORT set to: ${API_PORT}"
-	echo ".> SOCAT_PORT set to: ${SOCAT_PORT}"
 
 }
 
@@ -126,118 +123,31 @@ port_forwarding() {
 	echo ".> Starting Port Forwarding."
 	# validate API port
 	if [ -z "${API_PORT}" ]; then
-		echo ".> API_PORT not set, port: ${API_PORT}"
+		echo ".> ERROR: API_PORT not set"
 		exit 1
 	fi
 
-	if [ "$SSH_TUNNEL" = "yes" ] || [ "$SSH_TUNNEL" = "both" ]; then
-		echo ".> Starting SSH Tunnel"
-		# start socat of tunnel = both
-		if [ "$SSH_TUNNEL" = "both" ]; then
-			echo ".> Starting socat"
-			start_socat
-		fi
-		# ssh
-		start_ssh
-	else
-		echo ".> Starting socat"
-		start_socat
-	fi
+	# Start HAProxy for port forwarding
+	echo ".> Starting HAProxy"
+	start_haproxy
 }
 
-setup_ssh() {
-	# prepare SSH Tunnel
-	if [ "$SSH_TUNNEL" = "yes" ] || [ "$SSH_TUNNEL" = "both" ]; then
-		echo ".> Setting SSH tunnel"
-
-		_SSH_OPTIONS="-o ServerAliveInterval=${SSH_ALIVE_INTERVAL:-20}"
-		_SSH_OPTIONS+=" -o ServerAliveCountMax=${SSH_ALIVE_COUNT:-3}"
-
-		if [ -n "$SSH_OPTIONS" ]; then
-			_SSH_OPTIONS+=" $SSH_OPTIONS"
-		fi
-		SSH_ALL_OPTIONS="$_SSH_OPTIONS"
-		export SSH_ALL_OPTIONS
-		echo ".> SSH options: $SSH_ALL_OPTIONS"
-
-		file_env 'SSH_PASSPHRASE'
-		if [ -n "$SSH_PASSPHRASE" ]; then
-			if ! pgrep ssh-agent >/dev/null; then
-				# start agent if it's not already running
-				# https://wiki.archlinux.org/title/SSH_keys#SSH_agents
-				echo ".> Starting ssh-agent."
-				ssh-agent >"${HOME}/.ssh-agent.env"
-				source "${HOME}/.ssh-agent.env"
-				echo ".> ssh-agent sock: ${SSH_AUTH_SOCK}"
-			else
-				echo ".> ssh-agent already running"
-				if [ -z "${SSH_AUTH_SOCK}" ]; then
-					echo ".> Loading agent environment"
-					source "${HOME}/.ssh-agent.env"
-				fi
-				echo ".> ssh-agent sock: ${SSH_AUTH_SOCK}"
-			fi
-
-			if ls "${HOME}"/.ssh/id_* >/dev/null; then
-				echo ".> Adding keys to ssh-agent."
-				export SSH_ASKPASS_REQUIRE=never
-				SSHPASS="${SSH_PASSPHRASE}" sshpass -e -P "passphrase" ssh-add
-				unset_env 'SSH_PASSPHRASE'
-				echo ".> ssh-agent identities: $(ssh-add -l)"
-			else
-				echo ".> SSH keys not found, ssh-agent not started"
-			fi
-		fi
-	else
-		echo ".> SSH tunnel disabled"
-	fi
-}
-
-start_ssh() {
-	if [ -n "$(pgrep -f "127.0.0.1:${API_PORT}:localhost:")" ]; then
-		# if this script is already running don't start it
-		echo ".> SSH tunnel already active. Not starting a new one"
-		return 0
-	elif ! pgrep ssh-agent >/dev/null; then
-		# if ssh-agent is not running don't start tunnel
-		echo ".> ssh-agent is NOT running. Not starting a tunnel"
+start_haproxy() {
+	# Check if HAProxy is already running
+	if pgrep -x haproxy >/dev/null; then
+		echo ".> HAProxy already active. Not starting a new one"
 		return 0
 	fi
 
-	if [ -z "$SSH_REMOTE_PORT" ]; then
-		# by default remote port is same than API_PORT
-		SSH_REMOTE_PORT="$API_PORT"
-	fi
-	echo ".> SSH_REMOTE_PORT set to :${SSH_REMOTE_PORT}"
+	# Start HAProxy in background
+	echo ".> Starting HAProxy"
+	"${SCRIPT_PATH}/run_haproxy.sh" &
 
-	# set vnc ssh tunnel
-	if [ -n "$SSH_VNC_PORT" ] && pgrep x11vnc >/dev/null; then
-		# set ssh tunnel for vnc
-		SSH_SCREEN="-R 127.0.0.1:5900:localhost:$SSH_VNC_PORT"
-		echo ".> SSH_VNC_TUNNEL set to :${SSH_SCREEN}"
+	# Wait briefly and verify it started
+	sleep 2
+	if pgrep -x haproxy >/dev/null; then
+		echo ".> HAProxy started successfully"
 	else
-		# no ssh screen
-		SSH_SCREEN=
+		echo ".> WARNING: HAProxy may have failed to start"
 	fi
-
-	export SSH_ALL_OPTIONS SSH_SCREEN SSH_REMOTE_PORT
-	# run ssh client
-	"${SCRIPT_PATH}/run_ssh.sh" &
-}
-
-start_socat() {
-	# run socat
-	if [ -z "${SOCAT_PORT}" ]; then
-		echo ".> SOCAT_PORT not set, port: ${SOCAT_PORT}"
-		exit 1
-	fi
-	if [ -n "$(pgrep -f "fork TCP:127.0.0.1:${API_PORT}")" ]; then
-		# if this script is already running don't start it
-		echo ".> socat already active. Not starting a new one"
-		return 0
-	else
-		# start socat
-		"${SCRIPT_PATH}/run_socat.sh" &
-	fi
-
 }

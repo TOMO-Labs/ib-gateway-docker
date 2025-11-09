@@ -29,27 +29,20 @@ services:
       TZ: ${TIME_ZONE:-Etc/UTC}
       CUSTOM_CONFIG: ${CUSTOM_CONFIG:-NO}
       JAVA_HEAP_SIZE: ${JAVA_HEAP_SIZE:-}
-      SSH_TUNNEL: ${SSH_TUNNEL:-}
-      SSH_OPTIONS: ${SSH_OPTIONS:-}
-      SSH_ALIVE_INTERVAL: ${SSH_ALIVE_INTERVAL:-}
-      SSH_ALIVE_COUNT: ${SSH_ALIVE_COUNT:-}
-      SSH_PASSPHRASE: ${SSH_PASSPHRASE:-}
-      SSH_REMOTE_PORT: ${SSH_REMOTE_PORT:-}
-      SSH_USER_TUNNEL: ${SSH_USER_TUNNEL:-}
-      SSH_RESTART: ${SSH_RESTART:-}
-      SSH_VNC_PORT: ${SSH_VNC_PORT:-}
       START_SCRIPTS: ${START_SCRIPTS:-}
       X_SCRIPTS: ${X_SCRIPTS:-}
       IBC_SCRIPTS: ${IBC_SCRIPTS:-}
-    # Uncomment volumes as needed:
-    # volumes:
-    #   # Persistent IB Gateway settings
-    #   - ${PWD}/tws_settings/:${TWS_SETTINGS_PATH:-/home/ibgateway/Jts}
-    #   # SSH keys for tunnel authentication
-    #   - ${PWD}/ssh/:/home/ibgateway/.ssh
-    #   # Custom startup scripts
-    #   - ${PWD}/scripts:/home/ibgateway/init-scripts
+      # Uncomment volumes as needed:
+    #    volumes:
+    #      - ${PWD}/jts.ini:/home/ibgateway/Jts/jts.ini
+    #      - ${PWD}/config.ini:/home/ibgateway/ibc/config.ini
+    #      - ${PWD}/tws_settings/:${TWS_SETTINGS_PATH:-/home/ibgateway/Jts}
+    #      - ${PWD}/scripts:/home/ibgateway/init-scripts
     ports:
-      - "127.0.0.1:4001:4003"
-      - "127.0.0.1:4002:4004"
-      - "127.0.0.1:5900:5900"
+      # IB Gateway API ports (via HAProxy)
+      - "127.0.0.1:4001:4001"  # Live trading
+      - "127.0.0.1:4002:4002"  # Paper trading
+      # HAProxy stats page (optional - comment out if not needed)
+      - "127.0.0.1:8404:8404"  # HAProxy stats: http://localhost:8404/stats
+      # VNC server
+      - "127.0.0.1:5900:5900"  # VNC access

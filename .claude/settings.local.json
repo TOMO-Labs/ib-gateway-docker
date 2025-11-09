@@ -8,9 +8,16 @@
       "Bash(docker compose build:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(cat:*)",
       "Bash(git log:*)",
-      "Bash(git rebase:*)"
+      "Bash(chmod:*)",
+      "mcp__private-journal__process_thoughts",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:release-assets.githubusercontent.com)",
+      "Bash(git ls-tree:*)",
+      "Bash(cat:*)",
+      "Bash(docker run:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
