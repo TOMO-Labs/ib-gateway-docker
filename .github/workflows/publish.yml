@@ -50,7 +50,7 @@ jobs:
         with:
           images: |
             ghcr.io/tomo-labs/ib-gateway
-            tomo-labs/ib-gateway
+            lohanjacobs/ib-gateway-ibc-runner
           flavor: |
             latest=true
           tags: |
