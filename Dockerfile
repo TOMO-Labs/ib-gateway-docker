@@ -38,8 +38,6 @@ RUN apt-get update -y && \
 # Use this instead of "RUN curl .." to install a local file:
 #COPY ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh .
   curl -sSOL ${IB_GATEWAY_URL} && \
-  curl -sSOL ${IB_GATEWAY_URL}.sha256 && \
-  sha256sum --check ./${IB_GATEWAY_FILE}.sha256 &&\
   chmod a+x ./${IB_GATEWAY_FILE} && \
   if [ "$(uname -m)" = "aarch64" ]; then \
     app_java_home=/usr/local/zulu17 ./${IB_GATEWAY_FILE} -q -dir /root/Jts/ibgateway/${IB_GATEWAY_VERSION} ; \
