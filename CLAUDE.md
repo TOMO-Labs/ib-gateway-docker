@@ -104,6 +104,26 @@ When `TRADING_MODE=both`:
 - Settings paths are prefixed: `${TWS_SETTINGS_PATH}_live` and `${TWS_SETTINGS_PATH}_paper`
 - Different API ports used for live vs paper
 
+### Key Environment Variables
+
+**Authentication & Session Management:**
+- `TWS_USERID`, `TWS_PASSWORD`: IB credentials (or use `_FILE` variants for Docker secrets)
+- `TWOFA_TIMEOUT_ACTION`: Action on 2FA timeout (`exit` or `restart`)
+- `TWOFA_EXIT_INTERVAL`: Seconds to wait before exiting after 2FA timeout (default: 60)
+- `RELOGIN_AFTER_TWOFA_TIMEOUT`: Auto-retry login after 2FA timeout (`yes` or `no`)
+- `AUTO_RESTART_TIME`: Daily restart time (format: `HH:MM AM/PM`) - avoids daily 2FA after first login
+- `TWS_COLD_RESTART`: Complete Java restart time (format: `HH:MM` 24-hour)
+
+**API Settings:**
+- `TWS_ACCEPT_INCOMING`: Accept API connections (`accept`, `reject`, `manual` - default: `manual`)
+- `READ_ONLY_API`: Prevent API from placing orders (`yes` or `no`)
+- `TWS_MASTER_CLIENT_ID`: Restrict to specific client ID
+
+**Advanced:**
+- `CUSTOM_CONFIG`: Skip template processing, use custom config files (`yes` or `NO`)
+- `JAVA_HEAP_SIZE`: Java heap in MB (default: 768)
+- `HAPROXY_RESTART`: Seconds to wait before restarting HAProxy if it exits (default: 5)
+
 ## Port Forwarding Architecture
 
 **Why HAProxy is needed:**
