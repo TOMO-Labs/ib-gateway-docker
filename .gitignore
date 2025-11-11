@@ -8,3 +8,6 @@ ssh/
 /init-scripts/*
 
 .private-journal
+
+# Claude Code local settings
+.claude/settings.local.json
