@@ -61,8 +61,8 @@ jobs:
       - name: Update Dockerfile version
         if: ${{ steps.check-update.outputs.has_update == 'true' }}
         run: |
-          # Update version in Dockerfile
-          sed -i "s/ENV IB_GATEWAY_VERSION=.*/ENV IB_GATEWAY_VERSION=${{ steps.version.outputs.build_version }}/" Dockerfile
+          # Update version in Dockerfile (top-level ARG)
+          sed -i "s/ARG IB_GATEWAY_VERSION=.*/ARG IB_GATEWAY_VERSION=${{ steps.version.outputs.build_version }}/" Dockerfile
 
       - name: Update README
         if: ${{ steps.check-update.outputs.has_update == 'true' }}

@@ -5,10 +5,13 @@
 # production image and consume unnecessary space.
 ##############################################################################
 
+# Shared build argument for IB Gateway version
+ARG IB_GATEWAY_VERSION=10.41.1c
+
 # hadolint global ignore=DL3008,DL4006
 FROM ubuntu:24.04 AS setup
 
-ENV IB_GATEWAY_VERSION=10.41.1c
+ARG IB_GATEWAY_VERSION
 ENV IBC_VERSION=3.23.0
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_FILE="ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh"
@@ -64,7 +67,8 @@ COPY ./scripts /root/scripts
 
 FROM ubuntu:24.04
 
-ENV IB_GATEWAY_VERSION=$VERSION
+ARG IB_GATEWAY_VERSION
+ENV IB_GATEWAY_VERSION=${IB_GATEWAY_VERSION}
 # IB Gateway user constants
 ARG USER_ID="${USER_ID:-1000}"
 ARG USER_GID="${USER_GID:-1000}"
@@ -110,4 +114,4 @@ LABEL org.opencontainers.image.source=https://github.com/gnzsnz/ib-gateway-docke
 LABEL org.opencontainers.image.url=https://github.com/gnzsnz/ib-gateway-docker/pkgs/container/ib-gateway
 LABEL org.opencontainers.image.description="Docker image with IB Gateway and IBC "
 LABEL org.opencontainers.image.licenses="Apache License Version 2.0"
-LABEL org.opencontainers.image.version=${IB_GATEWAY_VERSION}-${IB_GATEWAY_RELEASE_CHANNEL}
+LABEL org.opencontainers.image.version=${IB_GATEWAY_VERSION}
