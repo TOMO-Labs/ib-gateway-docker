@@ -5,6 +5,12 @@ on:
     - cron: "0 6 * * *"
 
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force download and build even if version already exists'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -51,16 +57,21 @@ jobs:
       - name: Verify latest version
         id: verify_latest
         run: |
-          current=${{ steps.version.outputs.CURRENT_IBC }}
-          latest=${{ steps.ibc_version.outputs.IBC_LATEST }}
-
-          if [[ "$current" = "$latest" ]]; then
-            update="false"
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            echo "Force flag enabled, skipping version check"
+            echo "update=true" >> $GITHUB_OUTPUT
           else
-            update="true"
-          fi
+            current=${{ steps.version.outputs.CURRENT_IBC }}
+            latest=${{ steps.ibc_version.outputs.IBC_LATEST }}
 
-          echo "update=$update" >> $GITHUB_OUTPUT
+            if [[ "$current" = "$latest" ]]; then
+              update="false"
+            else
+              update="true"
+            fi
+
+            echo "update=$update" >> $GITHUB_OUTPUT
+          fi
 
       - name: Check if branch already exists
         id: verify_branch

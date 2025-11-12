@@ -5,6 +5,12 @@ on:
     - cron: "0 6 * * *"
 
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force download and build even if version already exists'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -36,12 +42,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release list > /tmp/ibgateway-releases
-          if grep -qF 'ibgateway@${{ steps.version.outputs.build_version }}' /tmp/ibgateway-releases
-          then
-            echo "has_update=false" >> $GITHUB_OUTPUT
-          else
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            echo "Force flag enabled, skipping version check"
             echo "has_update=true" >> $GITHUB_OUTPUT
+          else
+            gh release list > /tmp/ibgateway-releases
+            if grep -qF 'ibgateway@${{ steps.version.outputs.build_version }}' /tmp/ibgateway-releases
+            then
+              echo "has_update=false" >> $GITHUB_OUTPUT
+            else
+              echo "has_update=true" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: Download
