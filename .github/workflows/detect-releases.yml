@@ -100,4 +100,4 @@ jobs:
     name: Call build workflow
     needs: detect-release
     if: needs.detect-release.outputs.update == 'true'
-    uses: gnzsnz/ib-gateway-docker/.github/workflows/build.yml@master
+    uses: ./.github/workflows/build.yml
