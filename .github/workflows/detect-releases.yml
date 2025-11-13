@@ -103,6 +103,11 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git pull
+
+          # Delete old branch if it exists (both local and remote)
+          git branch -D "$t_branch" 2>/dev/null || true
+          git push origin --delete "$t_branch" 2>/dev/null || true
+
           git checkout -b "$t_branch" origin/master
           git add Dockerfile README.md
           git commit -m 'Update IB Gateway to `${{ steps.version.outputs.build_version }}`'
