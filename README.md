@@ -1,6 +1,6 @@
 # Interactive Brokers Gateway Docker
 
-<img src="https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/logo.png" height="300" alt="IB Gateway Docker"/>
+<img src="https://github.com/gnzsnz/ib-gateway-docker/blob/master/logo.png" height="300" alt="IB Gateway Docker"/>
 
 ## What is it?
 
@@ -19,26 +19,25 @@ It includes:
 - Support parallel execution of `live` and `paper` trading mode.
 - [Secrets](#credentials) support (latest `10.29.1e`, stable `10.19.2m` or greater)
 - Experimental [aarch64](#aarch64-support) support, ex raspberry pi, M1,M2,M3,.., since `10.37.1l`/`10.39.1e`
-- Execution of custom scripts during [start-up process](#start-up-scripts).
+- Execution of custom scripts during [star-up process](#start-up-scripts).
 - Works well together with [Jupyter Quant](https://github.com/quantbelt/jupyter-quant)
   docker image.
 
 ## Supported Tags
 
-The following tags are available for [ib-gateway][1]:
+Images are provided for [IB gateway][1] with the following tags:
 
-| Image| Channel  | IB Gateway Version  | IBC Version      | Docker Tags                                    |
-| --- | -------- | ------------------- | ---------------- | ---------------------------------------------- |
-| [ib-gateway][1] | `latest` | `10.41.1c` | `3.23.0` | `latest` `10.41` `10.41.1c` |
-| [ib-gateway][1] |`stable` | `10.37.1l` | `3.23.0` | `stable` `10.37` `10.37.1l` |
+| Image| IB Gateway Version  | IBC Version      | Docker Tags                                    |
+| --- | ------------------- | ---------------- | ---------------------------------------------- |
+| [ib-gateway][1] | `10.41.1d` | `3.23.0` | `latest` `10.41` `10.41.1d` |
 
 All tags are available in the container repository for [ib-gateway][1].
 
 ## How to use it?
 
 Create a `docker-compose.yml` file (or include ib-gateway services on your existing
-one). The sample file provided can be used as starting point:
-[ib-gateway-compose](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/docker-compose.yml).
+one). The sample file provided can be used as starting point,
+[ib-gateway-compose](https://github.com/gnzsnz/ib-gateway-docker/blob/master/docker-compose.yml).
 
 ```yaml
 name: algo-trader
@@ -46,10 +45,10 @@ services:
   ib-gateway:
     restart: always
     build:
-      context: .
+      context: ./stable
       tags:
-        - "ghcr.io/tomo-labs/ib-gateway:latest"
-    image: ghcr.io/tomo-labs/ib-gateway:latest
+        - "ghcr.io/gnzsnz/ib-gateway:stable"
+    image: ghcr.io/gnzsnz/ib-gateway:stable
     environment:
       TWS_USERID: ${TWS_USERID}
       TWS_PASSWORD: ${TWS_PASSWORD}
@@ -131,9 +130,9 @@ Once `docker-compose.yml` and `.env` are in place you can start the container wi
 docker compose up
 ```
 
-To get a GUI, use VNC to connect to the IB Gateway container.
+To get a GUI you can use VNC.
 
-Looking for help? Please keep reading below, or go to [discussion](https://github.com/TOMO-Labs/ib-gateway-docker/discussions) section for common problems and solutions.
+Looking for help? Please keep reading below, or go to [discussion](https://github.com/gnzsnz/ib-gateway-docker/discussions) section for common problems and solutions.
 
 ## Configuration
 
@@ -156,18 +155,17 @@ The container can be configured with the following environment variables:
 | `BYPASS_WARNING` | Settings relate to the corresponding 'Precautions' checkboxes in the API section of the Global Configuration dialog. Accepted values `yes`, `no` if not set, the existing Gateway configuration is unchanged  | **not defined**                                      |
 | `AUTO_RESTART_TIME`  | time to restart IB Gateway, does not require daily 2FA validation. format hh:mm AM/PM. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/master/userguide.md#ibc-user-guide) | **not defined**  |
 | `AUTO_LOGOFF_TIME` | Auto-Logoff: at a specified time, IB Gateway shuts down tidily, without restarting   | **not defined**   |
-| `TWS_COLD_RESTART` | IBC >= 3.19 set this value to time format hh:mm (24-hour format), ex `23:59` for Sunday cold restart | **not defined** |
+| `TWS_COLD_RESTART` | IBC >= 3.19 set this value to <hh:mm> | **not defined** |
 | `SAVE_TWS_SETTINGS`  | automatically save its settings on a schedule of your choosing. You can specify one or more specific times, ex `SaveTwsSettingsAt=08:00   12:30 17:30`  | **not defined**  |
 | `RELOGIN_AFTER_TWOFA_TIMEOUT` | support relogin after timeout. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/master/userguide.md#second-factor-authentication) | no  |
-| `TWOFA_EXIT_INTERVAL` | Seconds to wait before exiting after 2FA timeout | 60 |
-| `EXISTING_SESSION_DETECTED_ACTION` | Set Existing Session Detected Action. See IBC [documentation](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/config/ibc/config.ini.tmpl#L296-L329) | primary |
-| `ALLOW_BLIND_TRADING` | IB Gateway displays a dialog to warn you against blind trading. See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/c98d0bcc2ead9b8ab3900a23a707f01f8fd7dfbc/resources/config.ini#L702)| no |
-| `TIME_ZONE`  | Support for timezone, see your jts.ini file for [valid values](https://ibkrguides.com/tws/usersguidebook/configuretws/configgeneral.htm) on a [tz database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). This sets time zone for IB Gateway. If jts.ini exists it will not be set. if `TWS_SETTINGS_PATH` is set and stored in a volume, jts.ini will already exist so this will not be used. Examples `Europe/Paris`, `America/New_York`, `Asia/Tokyo` | "Etc/UTC"  |
-| `TWS_SETTINGS_PATH` | Settings path used by IBC's parameter `--tws_settings_path`. Use with a volume to preserve settings in the volume. If `TRADING_MODE=both` this will be the prefix for your settings. ex `/config/tws_settings_live` and `/config/tws_settings_paper`. |  |
+| `EXISTING_SESSION_DETECTED_ACTION` | Set Existing Session Detected Action. See IBC [documentation](https://github.com/gnzsnz/ib-gateway-docker/blob/master/latest/config/ibc/config.ini.tmpl#L296-L329) | primary |
+| `ALLOW_BLIND_TRADING` | IB Gateway displays a dialog to warn you against blind trading.See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/c98d0bcc2ead9b8ab3900a23a707f01f8fd7dfbc/resources/config.ini#L702)| no |
+| `TIME_ZONE`  | Support for timezone, see your jts.ini file for [valid values](https://ibkrguides.com/tws/usersguidebook/configuretws/configgeneral.htm) on a [tz database](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones). This sets time zone for IB Gateway. If jts.ini exists it will not be set. if `TWS_SETTINGS_PATH` is set and stored in a volume, jts.ini will already exists so this will not be used. Examples `Europe/Paris`, `America/New_York`, `Asia/Tokyo` | "Etc/UTC"  |
+| `TWS_SETTINGS_PATH` | Settings path used by IBC's parameter `--tws_settings_path`. Use with a volume to preserve settings in the volume. If `TRADING_MODE=both` this will be the prefix four your settings. ex `/config/tws_settings_live` and `/config/tws_settings_paper`. |  |
 | `TWS_ACCEPT_INCOMING` | See IBC documentation, possible values `accept`, `reject`, `manual` | `manual` |
 | `TWS_MASTER_CLIENT_ID` | See IBC [documentation](https://github.com/IbcAlpha/IBC/blob/b866a263afec948c70352ce077e1560f3ad2b152/resources/config.ini#L349) | **not defined** |
 | `CUSTOM_CONFIG` | If set to `yes`, then `run.sh` will not generate config files using env variables. You should mount config files. Use with care and only if you know what you are doing. | NO |
-| `JAVA_HEAP_SIZE` | Set Java heap size in MB, default 768MB. Enter just the number, don't enter units. See [Increase Memory Size](https://ibkrguides.com/tws/usersguidebook/priceriskanalytics/custommemory.htm) | **not defined**  |
+| `JAVA_HEAP_SIZE` | Set Java heap, default 768MB, TWS might need more. Proposed value 1024. Enter just the number, don't enter units, ex mb. See [Increase Memory Size for TWS](https://ibkrguides.com/tws/usersguidebook/priceriskanalytics/custommemory.htm) | **not defined**  |
 | `START_SCRIPTS` | Directory with bash scripts to run **before** X environment is up. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `X_SCRIPTS` | Directory with bash scripts to run **after** X environment is running. See [start-up scripts](#start-up-scripts) | **not defined** |
 | `IBC_SCRIPTS` | Directory with bash scripts to run **after** IBC is running. See [start-up scripts](#start-up-scripts) | **not defined** |
@@ -186,20 +184,20 @@ The following ports will be ready for usage on the ib-gateway container and dock
 
 HAProxy is used to forward IB Gateway API ports from the container's `127.0.0.1:4001/4002` to the container network `0.0.0.0:4001/4002`, with built-in health checks and monitoring. The sample `docker-compose.yml` maps these ports to the host at `127.0.0.1:4001/4002`.
 
-Note that with the above `docker-compose.yml`, ports are only exposed to the docker host (127.0.0.1), but not to the host network. To expose it to the host network change the port mappings accordingly (remove the '127.0.0.1:'). **Attention**: See [Leaving localhost](#leaving-localhost)
+Note that with the above `docker-compose.yml`, ports are only exposed to the docker host (127.0.0.1), but not to the host network. To expose it to the host network change the port mappings on accordingly (remove the '127.0.0.1:'). **Attention**: See [Leaving localhost](#leaving-localhost)
 
 ## Customizing the image
 
 Most if not all of the settings needed to run IB Gateway in a container are available as environment variables.
 
-However, if you need to go beyond what's available, the image can be customized by overwriting the default configuration files with custom ones. To do this you must set environment variable `CUSTOM_CONFIG=yes`. By setting `CUSTOM_CONFIG=yes` the `run.sh` script will not replace environment variables on config files. You must provide config files ready to be used by IB Gateway and IBC, please make sure that you are familiar with [IBC](https://github.com/IbcAlpha/IBC/blob/master/userguide.md) settings.
+However, if you need to go beyond what's available, the image can be customized by overwriting the default configuration files with custom ones. To do this you must set environment variable `CUSTOM_CONFIG=yes`. By setting `CUSTOM_CONFIG=yes` `run.sh` script will not replace environment variables on config files. You must provide config files ready to be used by IB Gateway and IBC, please make sure that you are familiar with [IBC](https://github.com/IbcAlpha/IBC/blob/master/userguide.md) settings.
 
 IB Gateway and IBC config file locations:
 
 | App  | Config file  | Default  |
 | --- | --- | --- |
-| IB Gateway | /home/ibgateway/Jts/jts.ini    | [jts.ini](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/config/ibgateway/jts.ini.tmpl) |
-| IBC  | /home/ibgateway/ibc/config.ini | [config.ini](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/config/ibc/config.ini.tmpl) |
+| IB Gateway | /home/ibgateway/Jts/jts.ini    | [jts.ini](https://github.com/gnzsnz/ib-gateway-docker/blob/master/image-files/config/ibgateway/jts.ini.tmpl) |
+| IBC  | /home/ibgateway/ibc/config.ini | [config.ini](https://github.com/gnzsnz/ib-gateway-docker/blob/master/image-files/config/ibc/config.ini.tmpl) |
 
 Sample settings:
 
@@ -261,13 +259,13 @@ and a volume in `docker-compose.yml`
 ```
 
 The start up process will search for start-up scripts in `$HOME/START_SCRIPTS`,
-`$HOME/X_SCRIPTS` and `$HOME/IBC_SCRIPTS` (where `$HOME=/home/ibgateway`).
+`$HOME/X_SCRIPTS` and `$HOME/IBC_SCRIPTS`.
 
 Scripts in directory `$HOME/START_SCRIPTS` will run before the X environment is
 up. Scripts in `$HOME/X_SCRIPTS` will run once X environment is up, and
 `$HOME/IBC_SCRIPTS` once IBC runs. Take into account that scripts will run as
 soon as possible, so you might need to wait for X environment to be fully up or
-IBC to complete the IB Gateway start-up process.
+IBC to complete IB Gateway start-up process.
 
 ## Security Considerations
 
@@ -289,17 +287,16 @@ additional layer of security (e.g. TLS/SSL or SSH tunnel) to protect the
 
 Some examples of possible configurations
 
-- Available to `localhost`, this is the default setup provided in [docker-compose.yml](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/docker-compose.yml).
+- Available to `localhost`, this is the default setup provided in [docker-compose.yml](https://github.com/gnzsnz/ib-gateway-docker/blob/master/docker-compose.yml).
 Suitable for testing. It does not expose API port to host network, host must be trusted.
 - Available to the host network. Unsecure configuration, suitable for short
   tests in a secure network. **Not recommended**.
 
   ```yaml
   ports:
-    - "4001:4001"
-    - "4002:4002"
+    - "4001:4003"
+    - "4002:4004"
     - "5900:5900"
-    - "8404:8404"
   ```
 
 - Available for other services in same docker network. Services with access to
@@ -355,37 +352,7 @@ secrets:
 
 ```
 
-In the "discussion" section you will find a full example for [ib-gateway](https://github.com/TOMO-Labs/ib-gateway-docker/discussions/103).
-
-## Migration from socat to HAProxy
-
-If you're upgrading from a previous version that used socat for port forwarding, you'll need to update your port mappings:
-
-**Old configuration (socat):**
-```yaml
-ports:
-  - "127.0.0.1:4001:4003"  # Live trading (via socat relay)
-  - "127.0.0.1:4002:4004"  # Paper trading (via socat relay)
-```
-
-**New configuration (HAProxy):**
-```yaml
-ports:
-  - "127.0.0.1:4001:4001"  # Live trading (direct via HAProxy)
-  - "127.0.0.1:4002:4002"  # Paper trading (direct via HAProxy)
-  - "127.0.0.1:8404:8404"  # HAProxy stats page (optional)
-```
-
-**Key changes:**
-- Port mappings are now direct (4001→4001, 4002→4002) instead of offset (4001→4003, 4002→4004)
-- New stats page available at `http://localhost:8404/stats` for monitoring connection health
-- HAProxy provides built-in health checks and automatic failover
-- SSH tunneling feature has been removed. For remote access, use external SSH port forwarding, VPN, or Tailscale
-
-**For remote access via SSH:**
-```bash
-ssh -L 4001:localhost:4001 user@your-host
-```
+In "discussion" section you will find full examples for [ib-gateway](https://github.com/gnzsnz/ib-gateway-docker/discussions/103)
 
 ## Troubleshooting HAProxy
 
@@ -399,10 +366,10 @@ HAProxy will automatically restart. You can monitor HAProxy health and connectio
 
 ## aarch64 support
 
-This is experimental, so expect bugs.
+This is experimental, so expects bugs.
 
-Please go to the discussions section to see common problems. Avoid creating issues unless
-you have empirically proven that it is a bug.
+Please go to discussions section to see common problems. Avoid creating issues unless
+you have empirically probed that is a bug, ie it does not work to me is not a bug.
 
 To use aarch64 you just need to run:
 
@@ -415,9 +382,9 @@ This will pull the right image for aarch64 architecture.
 ## IB Gateway installation files
 
 Note that the
-[Dockerfile](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/Dockerfile)
+[Dockerfile](https://github.com/gnzsnz/ib-gateway-docker/blob/master/Dockerfile)
 **does not download IB Gateway installer files from IB homepage but from the
-[github-releases](https://github.com/TOMO-Labs/ib-gateway-docker/releases) of this
+[github-releases](https://github.com/gnzsnz/ib-gateway-docker/releases) of this
 project**.
 
 This is because it shall be possible to (re-)build the image, targeting a
@@ -426,14 +393,14 @@ but IB only provide download links for the `latest` or `stable` version (there
 is no 'old version' download archive).
 
 The installer files stored on
-[releases](https://github.com/TOMO-Labs/ib-gateway-docker/releases) have been
+[releases](https://github.com/gnzsnz/ib-gateway-docker/releases) have been
 downloaded from IB homepage and renamed to reflect the version.
 
 IF you feel adventurous and you want to download Gateway installer from IB
 homepage directly, or use your local installation file, change this line
-on [Dockerfile](https://github.com/TOMO-Labs/ib-gateway-docker/blob/master/Dockerfile)
+on [Dockerfile](https://github.com/gnzsnz/ib-gateway-docker/blob/master/Dockerfile)
 `RUN curl -sSL
-https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh
+https://github.com/gnzsnz/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh
 --output ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh` to download
 (or copy) the file from the source you prefer.
 
@@ -444,7 +411,7 @@ https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/i
 1. Clone this repo
 
     ```bash
-      git clone https://github.com/TOMO-Labs/ib-gateway-docker
+      git clone https://github.com/gnzsnz/ib-gateway-docker
     ```
 
 1. Change docker file to use your local IB Gateway installer file, instead of
@@ -452,9 +419,9 @@ https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/i
    replace this lines:
 
    ```docker
-   RUN curl -sSL https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh \
+   RUN curl -sSL https://github.com/gnzsnz/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh \
        --output ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh
-   RUN curl -sSL https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.sha256 \
+   RUN curl -sSL https://github.com/gnzsnz/ib-gateway-docker/raw/gh-pages/ibgateway-releases/ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.sha256 \
        --output ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh.sha256
    ```
 
@@ -475,4 +442,4 @@ https://github.com/TOMO-Labs/ib-gateway-docker/raw/gh-pages/ibgateway-releases/i
    `{IBC_VERSION}` must match the version as configured on Dockerfile
 1. Build and run: `docker-compose up --build`
 
-[1]: https://github.com/orgs/TOMO-Labs/packages/container/package/ib-gateway "ib-gateway"
+[1]: https://github.com/users/gnzsnz/packages/container/package/ib-gateway "ib-gateway"
