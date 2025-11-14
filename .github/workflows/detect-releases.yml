@@ -110,6 +110,13 @@ jobs:
 
           git checkout -b "$t_branch" origin/master
           git add Dockerfile README.md
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "✅ No changes detected - version ${{ steps.version.outputs.build_version }} is already up to date"
+            exit 0
+          fi
+
           git commit -m 'Update IB Gateway to `${{ steps.version.outputs.build_version }}`'
           git push --set-upstream origin "$t_branch"
 
