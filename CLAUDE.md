@@ -210,3 +210,111 @@ Open http://localhost:8404/stats in your browser to view:
 
 **Preserve settings across container restarts:**
 Set `TWS_SETTINGS_PATH` and mount it as a volume in docker-compose.yml.
+
+## Common Issues
+
+### Issue 1: "can't find jars folder" Error
+
+**Symptom:**
+```
+Error: Offline TWS/Gateway version 10.41.1d is not installed: can't find jars folder
+Make sure you install the offline version of TWS/Gateway
+IBC does not work with the auto-updating TWS/Gateway
+```
+
+**Root Cause:**
+Volume mount at `/home/ibgateway/Jts` overwrites the IB Gateway installation directory, hiding the installed jars.
+
+**Problem Configuration:**
+```yaml
+# ❌ WRONG - This hides the IB Gateway installation
+volumes:
+  - ib-gateway-settings:/home/ibgateway/Jts
+```
+
+When you mount a volume at `/home/ibgateway/Jts`, Docker **replaces** the entire directory with the volume contents, which hides:
+- `/home/ibgateway/Jts/ibgateway/10.41.1d/` (the installed IB Gateway)
+- `/home/ibgateway/Jts/ibgateway/10.41.1d/jars/` (the jar files IBC needs)
+
+**Solution:**
+Use `TWS_SETTINGS_PATH` to point to a separate directory for persistent settings:
+
+```yaml
+# ✅ CORRECT - Settings in separate directory
+services:
+  ib-gateway:
+    image: ghcr.io/tomo-labs/ib-gateway:latest
+    environment:
+      TWS_SETTINGS_PATH: /home/ibgateway/settings  # Point to separate directory
+    volumes:
+      - ib-gateway-settings:/home/ibgateway/settings  # Mount volume at settings path
+```
+
+This way:
+- IB Gateway installation remains at: `/home/ibgateway/Jts/ibgateway/10.41.1d/jars/` ✅
+- Settings persist at: `/home/ibgateway/settings/` ✅
+- No conflict between installation and settings ✅
+
+**Alternative Solutions:**
+
+1. **No volume (settings don't persist):**
+```yaml
+services:
+  ib-gateway:
+    image: ghcr.io/tomo-labs/ib-gateway:latest
+    # No volume mount - settings reset on each restart
+```
+
+2. **Mount specific files only:**
+```yaml
+services:
+  ib-gateway:
+    image: ghcr.io/tomo-labs/ib-gateway:latest
+    volumes:
+      # Mount individual config files, not entire directory
+      - ./jts.ini:/home/ibgateway/Jts/jts.ini
+      - ./config.ini:/home/ibgateway/ibc/config.ini
+```
+
+### Issue 2: Docker Build Cache Issues
+
+**Symptom:**
+After fixing the Dockerfile, new images still fail with the same errors.
+
+**Root Cause:**
+Docker layer caching reuses old broken layers even after fixing the Dockerfile.
+
+**Solution:**
+The Dockerfile includes a `CACHE_BUST` build argument to force fresh builds when needed. This is already set up in the Dockerfile:
+
+```dockerfile
+ARG CACHE_BUST=1
+RUN echo "Cache bust: v${CACHE_BUST}" && \
+  apt-get update -y && \
+  ...
+```
+
+If you need to force a completely fresh build locally:
+```bash
+docker compose build --no-cache
+```
+
+### Issue 3: Published Images Not Updating
+
+**Symptom:**
+GitHub Actions workflows run successfully, but pulling images still gives old/broken versions.
+
+**Root Cause:**
+The `publish.yml` workflow only triggers on tags matching `v*` pattern.
+
+**Solution:**
+Create and push a new version tag to trigger image publishing:
+```bash
+git tag v10.41.1d.X  # Replace X with next increment
+git push origin v10.41.1d.X
+```
+
+This triggers the publish workflow which:
+1. Builds fresh images for amd64 and arm64
+2. Pushes to GitHub Container Registry (ghcr.io/tomo-labs/ib-gateway)
+3. Pushes to Docker Hub (lohanjacobs/ib-gateway-ibc-runner)
