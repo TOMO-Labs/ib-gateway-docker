@@ -12,6 +12,7 @@ ARG IB_GATEWAY_VERSION=10.41.1d
 FROM ubuntu:24.04 AS setup
 
 ARG IB_GATEWAY_VERSION
+ARG CACHE_BUST=1
 ENV IBC_VERSION=3.23.0
 ARG DEBIAN_FRONTEND=noninteractive
 ARG IB_GATEWAY_FILE="ibgateway-${IB_GATEWAY_VERSION}-standalone-linux-x64.sh"
@@ -27,7 +28,8 @@ ARG ZULU_URL=https://cdn.azul.com/zulu/bin/${ZULU_FILE}
 WORKDIR /tmp/setup
 
 # Prepare system
-RUN apt-get update -y && \
+RUN echo "Cache bust: v${CACHE_BUST}" && \
+  apt-get update -y && \
   apt-get install --no-install-recommends --yes \
   curl ca-certificates unzip && \
   apt-get clean && \
