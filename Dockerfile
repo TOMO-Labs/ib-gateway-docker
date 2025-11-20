@@ -6,7 +6,7 @@
 ##############################################################################
 
 # Shared build argument for IB Gateway version
-ARG IB_GATEWAY_VERSION=10.41.1d
+ARG IB_GATEWAY_VERSION=10.41.1e
 
 # hadolint global ignore=DL3008,DL4006
 FROM ubuntu:24.04 AS setup
