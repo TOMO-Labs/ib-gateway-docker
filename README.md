@@ -29,7 +29,7 @@ Images are provided for [IB gateway][1] with the following tags:
 
 | Image| IB Gateway Version  | IBC Version      | Docker Tags                                    |
 | --- | ------------------- | ---------------- | ---------------------------------------------- |
-| [ib-gateway][1] | `10.41.1d` | `3.23.0` | `latest` `10.41` `10.41.1d` |
+| [ib-gateway][1] | `10.42.1a` | `3.23.0` | `latest` `10.42` `10.42.1a` |
 
 All tags are available in the container repository for [ib-gateway][1].
 
